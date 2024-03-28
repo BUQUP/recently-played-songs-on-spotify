@@ -1,0 +1,65 @@
+name: Refresh README
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'  # Runs every 30 inutes, adjust as needed
+  push:
+    branches:
+      - main  # Adjust the branch name if needed
+
+jobs:
+  refresh-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure environment variables
+        uses: SpicyPizza/create-envfile@v1.3
+        with:
+          envkey_CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          envkey_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          envkey_REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'npm'
+
+      - name: Check if README exists and delete if it does
+        run: |
+          if [ -f README.md ]; then
+            echo "::set-output name=exists::true"
+            rm README.md
+          else
+            echo "::set-output name=exists::false"
+          fi
+        id: check-and-delete-readme
+
+      - name: Run script to update README
+        run: |
+          npm ci
+          node main.js
+
+      - name: Check for changes and commit if needed
+        run: |
+          if ! git diff-index --quiet HEAD --; then
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git add README.md
+            git commit -m "Update README.md"
+            git push
+            echo "::set-output name=changes::true"
+          else
+            echo "::set-output name=changes::false"
+          fi
+        id: git-check-and-commit
+        continue-on-error: true
+
+      - name: Clear commit
+        run: |
+          git checkout --orphan tmp
+          git commit -m "$(date)"
+          git branch -D main
+          git branch -m tmp main
+          git push --set-upstream origin main -f

@@ -1,0 +1,17 @@
+{
+  "name": "recently-played-songs",
+  "version": "1.0.0",
+  "description": "Get my recently played songs from Spotify",
+  "main": "main.js",
+  "scripts": {
+    "test": "node main.js"
+  },
+  "author": "James Hunter <jmshtr@proton.me> (https://jmshtr.github.io)",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "lowdb": "^3.0.0",
+    "node-fetch": "^3.2.6"
+  }
+}
